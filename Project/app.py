@@ -5,11 +5,9 @@ import joblib
 from collections import OrderedDict
 from pathlib import Path
 
-# Set page configuration
+
 st.set_page_config(page_title="Student Dropout Risk Predictor", layout="wide")
 
-# --- GLOBAL LIST OF RAW COLUMNS ---
-# List of columns that are provided as raw input values (numerical/binary)
 RAW_NUMERIC_AND_BINARY_COLS = [
     'Curricular units 1st sem (enrolled)', 'Curricular units 1st sem (approved)', 'Curricular units 1st sem (grade)',
     'Curricular units 2nd sem (enrolled)', 'Curricular units 2nd sem (approved)', 'Curricular units 2nd sem (grade)',
@@ -17,13 +15,12 @@ RAW_NUMERIC_AND_BINARY_COLS = [
     'Scholarship holder', 'Tuition fees up to date', 'Debtor', 'Gender'
 ]
 
-# --- 1. Load Pre-trained Model and Assets ---
-# NOTE: Replace the path placeholders below with YOUR actual full Windows paths.
+
 @st.cache_resource
 def load_model_assets():
-    """Loads all model assets (model, scaler, feature names, encoder) only once."""
+
     try:
-        # These relative paths work on Streamlit Cloud
+      
         model = joblib.load('final_model.joblib')
         feature_names = joblib.load('feature_names.joblib')
         label_encoder = joblib.load('label_encoder.joblib')
@@ -36,14 +33,12 @@ def load_model_assets():
         st.error(f"FATAL ERROR during model loading. Check dependencies and file integrity. Error: {e}")
         st.stop()
 
-# Load all assets using the cached function
+
 model, feature_names, label_encoder, scaler = load_model_assets()
 
-# --- 2. Define Feature Engineering Function ---
 def perform_feature_engineering(data):
     """Calculates the Total Failed Units, Grade Delta, and Approval Rate."""
 
-    # 1. Total Failed Units
     data['Total_Failed_Units'] = (
                                          data['Curricular units 1st sem (enrolled)'] - data[
                                      'Curricular units 1st sem (approved)']
@@ -52,84 +47,60 @@ def perform_feature_engineering(data):
                                      'Curricular units 2nd sem (approved)']
                                  )
 
-    # 2. Grade Delta
     data['Grade_Delta'] = data['Curricular units 2nd sem (grade)'] - data['Curricular units 1st sem (grade)']
 
-    # Calculate Total Enrolled and Total Approved for Approval Rate
     data['Total_Enrolled'] = data['Curricular units 1st sem (enrolled)'] + data['Curricular units 2nd sem (enrolled)']
     data['Total_Approved'] = data['Curricular units 1st sem (approved)'] + data['Curricular units 2nd sem (approved)']
 
-    # 3. Approval Rate: Handle division by zero
+
     data['Approval_Rate'] = data.apply(
         lambda row: row['Total_Approved'] / row['Total_Enrolled'] if row['Total_Enrolled'] > 0 else 0,
         axis=1
     )
 
-    # Drop the temporary calculation columns
     data = data.drop(columns=['Total_Enrolled', 'Total_Approved'])
     return data
 
 
-# --- 3. Prediction Function (FULLY FIXED FOR ALIGNMENT AND SCALING) ---
 def predict_outcome(raw_data):
-    # Convert raw input to DataFrame
+
     df_raw = pd.DataFrame([raw_data])
 
-    # Apply feature engineering
+
     df_engineered = perform_feature_engineering(df_raw.copy())
 
-    # --- Encoding and Alignment ---
 
-    # Apply one-hot encoding on the necessary string columns
     df_encoded = pd.get_dummies(df_engineered,
                                 columns=['Marital Status', 'Application mode', 'Daytime/evening attendance'],
                                 drop_first=True)
 
-    # 1. Create the final DataFrame with ALL expected columns (from training) initialized to 0
     df_final = pd.DataFrame(OrderedDict([(col, [0]) for col in feature_names]))
 
-    # 2. Populate the raw numeric, binary, and engineered columns
-    # We must use the column names exactly as they are in the input, which includes 'Admission grade'
-
-    # List of ALL columns in df_encoded that should be transferred (raw + engineered + OHE)
-    # This loop ensures every available input column is transferred
     for col in df_encoded.columns:
         if col in df_final.columns:
             df_final[col] = df_encoded[col].values
 
-    # At this point, df_final has 60+ columns. The 20 user-input related columns are populated; the rest are 0.
-
-    # --- Scaling (FIXED: ASSUME SCALER WAS FIT ON ALL FEATURES) ---
-    # The error requires all 60+ features to be present during transform.
-    # Therefore, we must transform the entire df_final and rely on the model being trained correctly.
-
-    # 1. Transform the values (using .values to pass a numpy array)
-    # We must use the full feature set (df_final) to satisfy the transformer
     transformed_values = scaler.transform(df_final.values)
 
-    # 2. Create a new DataFrame from the transformed values
+
     df_transformed = pd.DataFrame(transformed_values, columns=feature_names)
 
-    # Final prediction uses the transformed DataFrame
     prediction_num = model.predict(df_transformed.values)
 
     prediction_label = label_encoder.inverse_transform(prediction_num)
 
-    # Get prediction probabilities for confidence
     prediction_proba = model.predict_proba(df_transformed.values).flatten()
 
     return prediction_label[0], prediction_proba
 
 
-# --- 4. Streamlit UI (This part remains the same) ---
 
 st.title("🎓 Student Outcome Early Warning System")
 st.markdown(
     "Use this tool to predict a student's final outcome based on their first-year academic and personal data. Predictions are made using the optimized **Random Forest + SMOTE** model.")
 
-# Create the input form
 with st.form("student_input_form"):
-    # --- A. Academic Performance Section (Curricular Units) ---
+ 
     st.header("1. Academic Performance (Semester Grades and Units)")
 
     col1, col2, col3 = st.columns(3)
@@ -158,7 +129,7 @@ with st.form("student_input_form"):
 
     st.markdown("---")
 
-    # --- B. Demographic and Financial Section ---
+
     st.header("2. Financial and Status Indicators")
     col4, col5, col6, col7 = st.columns(4)
 
@@ -179,12 +150,12 @@ with st.form("student_input_form"):
     with col7:
         gender = st.selectbox("Gender", ["Male", "Female"], key="ge")
 
-    # --- Prediction Button ---
+-
     st.markdown("---")
     submitted = st.form_submit_button("Predict Student Outcome")
 
 if submitted:
-    # Map raw inputs to the structure expected by the prediction function
+  
     raw_input_data = {
         'Curricular units 1st sem (enrolled)': sem1_enrolled,
         'Curricular units 1st sem (approved)': sem1_approved,
@@ -195,25 +166,24 @@ if submitted:
         'Admission grade': admission_grade,
         'Age at enrollment': age_at_enrollment,
 
-        # Binary variables mapped to 0 or 1
+
         'Scholarship holder': 1 if scholarship_holder == 'Yes' else 0,
         'Tuition fees up to date': 1 if tuition_up_to_date == 'Yes' else 0,
         'Debtor': 1 if debtor == 'Yes' else 0,
         'Gender': 1 if gender == 'Female' else 0,
-
-        # Categorical strings
+      
         'Marital Status': marital_status,
         'Application mode': application_mode,
         'Daytime/evening attendance': daytime_attendance,
     }
 
-    # Get prediction
+
     result_label, result_proba = predict_outcome(raw_input_data)
 
-    # Map probabilities to class names
+
     proba_dict = dict(zip(label_encoder.classes_, result_proba))
 
-    # --- Display Results ---
+
     st.header(f"Prediction Result: {result_label}")
 
     if result_label == "Dropout":
@@ -224,7 +194,7 @@ if submitted:
         st.warning(
             f"🔔 **Stable:** The model predicts the student will remain **{result_label}** (Confidence: {proba_dict['Enrolled'] * 100:.1f}%)")
         st.markdown("This student is currently on track, but continuous monitoring is advised.")
-    else:  # Graduate
+    else: 
         st.success(
             f"✅ **Success:** The model predicts the student will **{result_label}** (Confidence: {proba_dict['Graduate'] * 100:.1f}%)")
         st.markdown("The student is performing well and is not considered a primary risk.")
