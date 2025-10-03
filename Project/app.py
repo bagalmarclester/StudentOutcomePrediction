@@ -16,7 +16,7 @@ RAW_NUMERIC_AND_BINARY_COLS = [
 ]
 
 try:
-    # Example Path: r'C:\Users\xlr8m\PyCharmMiscProject\Project\final_model.joblib'
+ 
     model = joblib.load(r'\Project\final_model.joblib')
     feature_names = joblib.load(r'\Project\feature_names.joblib')
     label_encoder = joblib.load(r'\Project\label_encoder.joblib')
