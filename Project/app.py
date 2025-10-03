@@ -144,7 +144,7 @@ with st.form("student_input_form"):
     with col7:
         gender = st.selectbox("Gender", ["Male", "Female"], key="ge")
 
--
+
     st.markdown("---")
     submitted = st.form_submit_button("Predict Student Outcome")
 
