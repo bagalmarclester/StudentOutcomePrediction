@@ -18,13 +18,25 @@ RAW_NUMERIC_AND_BINARY_COLS = [
 
 # --- 1. Load Pre-trained Model and Assets ---
 # NOTE: Replace the path placeholders below with YOUR actual full Windows paths.
-try:
-    # Example Path: r'C:\Users\xlr8m\PyCharmMiscProject\Project\final_model.joblib'
-# AFTER (Relative Paths for GitHub/Streamlit Cloud):
-    model = joblib.load('final_model.joblib')
-    feature_names = joblib.load('feature_names.joblib')
-    label_encoder = joblib.load('label_encoder.joblib')
-    scaler = joblib.load('scaler.joblib')
+@st.cache_resource
+def load_model_assets():
+    """Loads all model assets (model, scaler, feature names, encoder) only once."""
+    try:
+        # These relative paths work on Streamlit Cloud
+        model = joblib.load('final_model.joblib')
+        feature_names = joblib.load('feature_names.joblib')
+        label_encoder = joblib.load('label_encoder.joblib')
+        scaler = joblib.load('scaler.joblib')
+        return model, feature_names, label_encoder, scaler
+    except FileNotFoundError:
+        st.error("FATAL ERROR: One or more deployment files (.joblib) not found. Verify your GitHub repository.")
+        st.stop()
+    except Exception as e:
+        st.error(f"FATAL ERROR during model loading. Check dependencies and file integrity. Error: {e}")
+        st.stop()
+
+# Load all assets using the cached function
+model, feature_names, label_encoder, scaler = load_model_assets()
 
 except FileNotFoundError:
     st.error("FATAL ERROR: Deployment file not found. Please verify the file paths.")
