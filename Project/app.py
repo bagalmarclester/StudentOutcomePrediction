@@ -38,14 +38,6 @@ def load_model_assets():
 # Load all assets using the cached function
 model, feature_names, label_encoder, scaler = load_model_assets()
 
-except FileNotFoundError:
-    st.error("FATAL ERROR: Deployment file not found. Please verify the file paths.")
-    st.stop()
-except Exception as e:
-    st.error(f"FATAL ERROR during model loading. Check dependencies (imbalanced-learn, joblib) and paths. Error: {e}")
-    st.stop()
-
-
 # --- 2. Define Feature Engineering Function ---
 def perform_feature_engineering(data):
     """Calculates the Total Failed Units, Grade Delta, and Approval Rate."""
