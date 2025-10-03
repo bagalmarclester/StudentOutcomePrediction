@@ -15,19 +15,34 @@ RAW_NUMERIC_AND_BINARY_COLS = [
     'Scholarship holder', 'Tuition fees up to date', 'Debtor', 'Gender'
 ]
 
-try:
- 
-    model = joblib.load(r'Project/final_model.joblib')
-    feature_names = joblib.load(r'Project/feature_names.joblib')
-    label_encoder = joblib.load(r'Project/label_encoder.joblibb')
-    scaler = joblib.load(r'Project/scaler.joblib')
+@st.cache_resource
+def load_model_assets():
 
-except FileNotFoundError:
-    st.error("FATAL ERROR: Deployment file not found. Please verify the file paths.")
-    st.stop()
-except Exception as e:
-    st.error(f"FATAL ERROR during model loading. Check dependencies (imbalanced-learn, joblib) and paths. Error: {e}")
-    st.stop()
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    try:
+      
+        model_path = os.path.join(BASE_DIR, 'final_model.joblib')
+        features_path = os.path.join(BASE_DIR, 'feature_names.joblib')
+        encoder_path = os.path.join(BASE_DIR, 'label_encoder.joblib')
+        scaler_path = os.path.join(BASE_DIR, 'scaler.joblib')
+      
+        model = joblib.load(model_path)
+        feature_names = joblib.load(features_path)
+        label_encoder = joblib.load(encoder_path)
+        scaler = joblib.load(scaler_path)
+        
+        return model, feature_names, label_encoder, scaler
+    except FileNotFoundError:
+        st.error(f"FATAL ERROR: Deployment file not found. Checked directory: {BASE_DIR}")
+        st.error("Please verify that all .joblib files are in the exact same folder as streamlit_app.py on GitHub.")
+        st.stop()
+    except Exception as e:
+        st.error(f"FATAL ERROR during model loading. Check dependencies and file integrity. Error: {e}")
+        st.stop()
+
+# Load all assets using the cached function
+model, feature_names, label_encoder, scaler = load_model_assets()
 
 
 def perform_feature_engineering(data):
