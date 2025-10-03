@@ -20,10 +20,11 @@ RAW_NUMERIC_AND_BINARY_COLS = [
 # NOTE: Replace the path placeholders below with YOUR actual full Windows paths.
 try:
     # Example Path: r'C:\Users\xlr8m\PyCharmMiscProject\Project\final_model.joblib'
-    model = joblib.load(r'C:\Users\xlr8m\PyCharmMiscProject\Project\final_model.joblib')
-    feature_names = joblib.load(r'C:\Users\xlr8m\PyCharmMiscProject\Project\feature_names.joblib')
-    label_encoder = joblib.load(r'C:\Users\xlr8m\PyCharmMiscProject\Project\label_encoder.joblib')
-    scaler = joblib.load(r'C:\Users\xlr8m\PyCharmMiscProject\Project\scaler.joblib')
+# AFTER (Relative Paths for GitHub/Streamlit Cloud):
+model = joblib.load('final_model.joblib')
+feature_names = joblib.load('feature_names.joblib')
+label_encoder = joblib.load('label_encoder.joblib')
+scaler = joblib.load('scaler.joblib')
 
 except FileNotFoundError:
     st.error("FATAL ERROR: Deployment file not found. Please verify the file paths.")
