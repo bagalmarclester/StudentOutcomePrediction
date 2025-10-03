@@ -17,10 +17,10 @@ RAW_NUMERIC_AND_BINARY_COLS = [
 
 try:
  
-    model = joblib.load(r'\Project\final_model.joblib')
-    feature_names = joblib.load(r'\Project\feature_names.joblib')
-    label_encoder = joblib.load(r'\Project\label_encoder.joblib')
-    scaler = joblib.load(r'\Project\scaler.joblib')
+    model = joblib.load(r'Project/final_model.joblib')
+    feature_names = joblib.load(r'Project/feature_names.joblib')
+    label_encoder = joblib.load(r'Project/label_encoder.joblibb')
+    scaler = joblib.load(r'Project/scaler.joblib')
 
 except FileNotFoundError:
     st.error("FATAL ERROR: Deployment file not found. Please verify the file paths.")
