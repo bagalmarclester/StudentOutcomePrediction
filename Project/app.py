@@ -15,26 +15,20 @@ RAW_NUMERIC_AND_BINARY_COLS = [
     'Scholarship holder', 'Tuition fees up to date', 'Debtor', 'Gender'
 ]
 
+try:
+    # Example Path: r'C:\Users\xlr8m\PyCharmMiscProject\Project\final_model.joblib'
+    model = joblib.load(r'\Project\final_model.joblib')
+    feature_names = joblib.load(r'\Project\feature_names.joblib')
+    label_encoder = joblib.load(r'\Project\label_encoder.joblib')
+    scaler = joblib.load(r'\Project\scaler.joblib')
 
-@st.cache_resource
-def load_model_assets():
+except FileNotFoundError:
+    st.error("FATAL ERROR: Deployment file not found. Please verify the file paths.")
+    st.stop()
+except Exception as e:
+    st.error(f"FATAL ERROR during model loading. Check dependencies (imbalanced-learn, joblib) and paths. Error: {e}")
+    st.stop()
 
-    try:
-      
-        model = joblib.load('final_model.joblib')
-        feature_names = joblib.load('feature_names.joblib')
-        label_encoder = joblib.load('label_encoder.joblib')
-        scaler = joblib.load('scaler.joblib')
-        return model, feature_names, label_encoder, scaler
-    except FileNotFoundError:
-        st.error("FATAL ERROR: One or more deployment files (.joblib) not found. Verify your GitHub repository.")
-        st.stop()
-    except Exception as e:
-        st.error(f"FATAL ERROR during model loading. Check dependencies and file integrity. Error: {e}")
-        st.stop()
-
-
-model, feature_names, label_encoder, scaler = load_model_assets()
 
 def perform_feature_engineering(data):
     """Calculates the Total Failed Units, Grade Delta, and Approval Rate."""
